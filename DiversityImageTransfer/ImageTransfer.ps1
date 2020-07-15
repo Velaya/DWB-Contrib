@@ -59,9 +59,7 @@ $BACKUP_ARGS_EXE 	= " -NoNewWindow -Wait -Verbose -ArgumentList `"archive -optfi
 $emailFrom 		 	= "it@smns-bw.de"                ##### EMail notification sender
 $emailTo   		 	= "it@smns-bw.de"                ##### EMail notification recipient
 $emailSmtpServer 	= "smtp.gmail.com"               ##### EMail out server
-
-$emailPw = Get-Content .\MailPW.txt | ConvertTo-SecureString
-$emailCred = New-Object System.Management.Automation.PSCredential ($emailFrom, $emailPw)
+$emailPw = Get-Content ("C:\ImageTransfer\MailPW.txt")
 #
 # ExifTool
 #
@@ -117,8 +115,8 @@ if ($WorkOnImageStorage)
 }
 else
 {
-	$InputDrive = "S:/"
-	$ArchiveDrive = "S:/"
+	$InputDrive = "O:/"
+	$ArchiveDrive = "O:/"
 }
 #
 #
@@ -142,23 +140,23 @@ if ( $args.Length -gt 0)
 {
 	if (($args[0]).ToString() -eq "?")
 	{
-		echo ""
-		echo "usage: .\ImageTransfer Project Filename (Subdirectory) (Flags)"
-		echo ""
-		echo "Flags: ''11111111111''"
-		echo ""
-		echo "UPDATE_DATABASE_FLAG                     1"
-		echo "BACKUP_ORIGINAL_FILES                    01"
-		echo "RENAME_ORIGINAL_FILES                    001"
-		echo "TRANSFER_TO_WEB_SERVER_FLAG              0001"
-		echo "CHECK_WEB_SERVER_FILE_FLAG               00001"
-		echo "COMPARE_WEB_FILE_FLAG                    000001"
-		echo "IMAGE_CONVERSION_FLAG                    0000001"
-		echo "REMOVE_IMAGE_FROM_TRANSFER_DIR_FLAG      00000001"
-		echo "REMOVE_LOCAL_WEB_FILES                   000000001"
-		echo "CREATE_SYMBOLIC_LINKS                    0000000001"
-		echo "READ_EXIF_INFO                           00000000001"
-		echo ""
+		Write-Output ""
+		Write-Output "usage: .\ImageTransfer Project Filename (Subdirectory) (Flags)"
+		Write-Output ""
+		Write-Output "Flags: ''11111111111''"
+		Write-Output ""
+		Write-Output "UPDATE_DATABASE_FLAG                     1"
+		Write-Output "BACKUP_ORIGINAL_FILES                    01"
+		Write-Output "RENAME_ORIGINAL_FILES                    001"
+		Write-Output "TRANSFER_TO_WEB_SERVER_FLAG              0001"
+		Write-Output "CHECK_WEB_SERVER_FILE_FLAG               00001"
+		Write-Output "COMPARE_WEB_FILE_FLAG                    000001"
+		Write-Output "IMAGE_CONVERSION_FLAG                    0000001"
+		Write-Output "REMOVE_IMAGE_FROM_TRANSFER_DIR_FLAG      00000001"
+		Write-Output "REMOVE_LOCAL_WEB_FILES                   000000001"
+		Write-Output "CREATE_SYMBOLIC_LINKS                    0000000001"
+		Write-Output "READ_EXIF_INFO                           00000000001"
+		Write-Output ""
 		exit 0
 	}
 	$ProjectName	= ($args[0]).ToString()
@@ -240,7 +238,7 @@ $REMOVE_LOCAL_WEB_FILES					= $true		# "000000001"
 $CREATE_SYMBOLIC_LINKS					= $true		# "0000000001"		<-- $true (if "no-date"-filenames)
 $READ_EXIF_INFO							= $true		# "00000000001"
 #
-$trace = $false										# <-- do not trace execution in Debug file
+$trace = $true									# <-- do not trace execution in Debug file
 $listAddr = $true
 #
 # Set execution control flags if argument has been transmitted
@@ -454,7 +452,7 @@ function Trace( [string] $Text )
 	if( $trace -eq $true )
 	{
 		$t = ([System.DateTime]::Now).ToString()
-		echo $t":  "$Text >> $global:traceFile
+		Write-Output $t":  "$Text >> $global:traceFile
 	}
 }
 	
@@ -470,7 +468,7 @@ function ListAddr( [string] $Text )
 	if( $listAddr -eq $true )
 	{
 		$t = ([System.DateTime]::Now).ToString()
-		echo $t":  "$Text >> $listAddrFile
+		Write-Output $t":  "$Text >> $listAddrFile
 	}
 }
 
@@ -1047,7 +1045,7 @@ function CheckValidFileName( [string] $MyOriginalFileName )
 		# get substrings name, number, date, time
 		#
 		$ind1 = $fileString.LastIndexOf( '_' )
-		if ($ind1 -ge 12)
+		if ($ind1 -ge 30)
 		{
 			$strTime = $fileString.SubString($ind1+1)
 			$ind2 = $fileString.IndexOf( '_' )
@@ -1101,7 +1099,7 @@ function CheckValidFileName( [string] $MyOriginalFileName )
 					#
 					# ignore one Underscore
 					#
-					if ($fileString[$i1] -eq $UNDERSCORE -and $i1 -lt ($fileString.Length - 1))
+					if ($fileString[$i1] -eq $UNDERSCORE -and $i1 -lt ($fileString.Length - 2))
 					{
 						$i1++
 					}
@@ -1966,7 +1964,7 @@ function MakeUri ( [string] $targetFile )
 	$webdir  = $WebProjectRoot + "/" + $webdir	
 
 	
-	echo $global:Image_URI
+	Write-Output $global:Image_URI
 }
 
 # #######################################################################################
@@ -2488,7 +2486,7 @@ catch
 	
 	Write-Output $message
 	Trace $message;
-	Send-MailMessage -Credential $emailCred -port 465 -From $emailFrom -To $emailTo -SmtpServer $emailSmtpServer -Subject $Subject -Body $message -UseSsl
+	Send-MailMessage -From $emailFrom -to $emailTo -Subject $Subject -Body $message -SmtpServer $emailSmtpServer -Credential (New-Object PSCredential($emailFrom,(ConvertTo-SecureString $emailPw -AsPlainText -Force))) -UseSSL -Port 587
 	exit 1
 }
 
@@ -2558,10 +2556,10 @@ ForEach ( $i in get-childitem "$FullImageImportPath/$InputFileName" | sort )
 		$message = $_.Exception.GetType().FullName + ": " + $_.Exception.Message + "`r`n" + $global:EmailMessage
 		
 		Write-Output $message
-		Send-MailMessage -Credential $emailCred -port 465 -From $emailFrom -To $emailTo -SmtpServer $emailSmtpServer -Subject $Subject -Body $message -UseSsl
+	    Send-MailMessage -From $emailFrom -to $emailTo -Subject $Subject -Body $message -SmtpServer $emailSmtpServer -Credential (New-Object PSCredential($emailFrom,(ConvertTo-SecureString $emailPw -AsPlainText -Force))) -UseSSL -Port 587
 		
-		echo $_.Exception.Message >> $Exception
-		echo $_.Exception.GetType().FullName >> $Exception
+		Write-Output $_.Exception.Message >> $Exception
+		Write-Output $_.Exception.GetType().FullName >> $Exception
 
 		Write-Output "ERROR on image $i - MessageCount: $Counter"
 		$global:RetVal = 0
@@ -2588,10 +2586,10 @@ if ( $args.Length -gt 1)
 {
 	$Subject = $Projectname + ": " + $global:BsmFileName
 	$message = "File has been transmitted - " + $global:returnString
-	#if ( -not $JustReturnTargetPath -and $TRANSFER_TO_WEB_SERVER_FLAG)
-	#{
-	#	Send-MailMessage -Credential $emailCred -port 465 -From $emailFrom -To $emailTo -SmtpServer $emailSmtpServer -Subject $Subject -Body $message
-	#}
+	if ( -not $JustReturnTargetPath -and $TRANSFER_TO_WEB_SERVER_FLAG)
+	{
+	    Send-MailMessage -From $emailFrom -to $emailTo -Subject $Subject -Body $message -SmtpServer $emailSmtpServer -Credential (New-Object PSCredential($emailFrom,(ConvertTo-SecureString $emailPw -AsPlainText -Force))) -UseSSL -Port 587
+	}
 }
 #
 # return URL of last processed image for MediaService
