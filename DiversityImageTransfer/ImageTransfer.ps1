@@ -21,7 +21,7 @@ $SQL_PROJECTS_DATABASE_NAME = "DiversityProjects_SMNS"  ##### Preset Projects da
 #
 # Set BSM license info 
 #
-$SQL_IPR = "Staatliches Musem für Naturkunde Stuttgart, Germany"
+$SQL_IPR = "Staatliches Museum für Naturkunde Stuttgart, Germany"
 $SQL_LicenseType = "CC BY-SA 4.0"
 $SQL_LicenseHolder = "SMNS"
 $SQL_LicenseURI = "https://creativecommons.org/licenses/by-sa/4.0"
@@ -110,13 +110,13 @@ $ArchiveOnImageStorage = $true
 if ($WorkOnImageStorage)
 {
 	$InputDrive = "//$global:ServerIP/imdas_medien/"
-	$ArchiveDrive = "//$global:ServerIP/"
+	$ArchiveDrive = "//$global:ServerIP/imdas_medien/"
     $ArchiveOnImageStorage = $false
 }
 else
 {
-	$InputDrive = "O:/"
-	$ArchiveDrive = "O:/"
+	$InputDrive = "S:/"
+	$ArchiveDrive = "S:/"
 }
 #
 #
@@ -238,7 +238,7 @@ $REMOVE_LOCAL_WEB_FILES					= $true		# "000000001"
 $CREATE_SYMBOLIC_LINKS					= $true		# "0000000001"		<-- $true (if "no-date"-filenames)
 $READ_EXIF_INFO							= $true		# "00000000001"
 #
-$trace = $true									# <-- do not trace execution in Debug file
+$trace = $false									# <-- do not trace execution in Debug file
 $listAddr = $true
 #
 # Set execution control flags if argument has been transmitted
@@ -2505,7 +2505,7 @@ if ($BACKUP_ORIGINAL_FILES)
 #
 Write-Output( "Process images" )
 #
-ForEach ( $i in get-childitem "$FullImageImportPath/$InputFileName" | sort ) 
+ForEach ( $i in get-childitem "$FullImageImportPath/$InputFileName" | Sort-Object )
 {
 	$global:EmailMessage = "Image: $i `r`n"
 	
